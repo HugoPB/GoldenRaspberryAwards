@@ -2,7 +2,7 @@
 
 Sistema para exibir dados do 'Golden Raspberry Awards' contidos em um arquivo .csv
 ````
-git clone https://github.com/HugoPB/golden-raspberry-awards.git
+git clone https://github.com/HugoPB/GoldenRaspberryAwards.git
 ````
 
 ## Instruções
