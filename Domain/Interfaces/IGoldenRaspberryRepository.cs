@@ -3,7 +3,7 @@ namespace Domain.Interfaces
 {
     public interface IGoldenRaspberryRepository
     {
-        public Task<IEnumerable<GoldenRaspberryAward>> GetAll();
-        public Task<IEnumerable<GoldenRaspberryAward>> GetAllWinners();
+        public Task<IEnumerable<GoldenRaspberryAward>> GetAll(bool winners);
+        public Task<IEnumerable<Producer>> GetAllProducersWinners();
     }
 }

@@ -5,6 +5,7 @@ using FluentValidation;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Globalization;
 
 namespace Data
@@ -43,6 +44,7 @@ namespace Data
             try
             {
                 CreateGoldenRasperryTable();
+                CreateAwardProducerTable();
                 FromCSVToDB();
 
                 _logger.LogInformation("SQLite Started !");
@@ -77,12 +79,23 @@ namespace Data
                 csv.TryGetField<string>("winner", out string? winner);
                 var rowinfile = csv.Parser.Row;
 
+                List<string> Producers = [];
+                if(producer != null)
+                {
+                    List<string> producers = [.. producer.Split([", and ", ",", " and ",], StringSplitOptions.None)];
+
+                    foreach (var pdr in producers)
+                    {
+                        Producers.Add(pdr.Trim());
+                    }
+                }
+
                 yield return new GoldenRaspberryCSV()
                 {
                     Year = year != "" ? Convert.ToInt32(year) : 0,
                     Title = title ?? "",
                     Studio = studio ?? "",
-                    Producer = producer ?? "",
+                    Producers = Producers,
                     Winner = winner == "yes",
                     RowinFile = rowinfile
                 };
@@ -93,7 +106,9 @@ namespace Data
         {
             var csvFilePath = Configuration.GetSection("PathCSV").Value ?? "";
 
-            var sql = "INSERT INTO GoldenRaspberry(year, title, studio, producer, winner) VALUES (@year, @title, @studio, @producer, @winner)";
+            var sqlGoldenRaspberry = "INSERT INTO GoldenRaspberry(year, title, studio, winner) VALUES (@year, @title, @studio, @winner); SELECT id FROM GoldenRaspberry ORDER BY ID DESC";
+
+            var sqlAwardProducer = "INSERT INTO AwardProducer (producer, goldenraspberryid) VALUES (@producer, @goldenraspberryid)";
 
             var connection = GetInMemoryDbConnection();
 
@@ -103,13 +118,20 @@ namespace Data
 
                 if (validationResult.IsValid)
                 {
-                    using var command = new SqliteCommand(sql, connection);
+                    using var command = new SqliteCommand(sqlGoldenRaspberry, connection);
                     command.Parameters.AddWithValue("@year", GR.Year);
                     command.Parameters.AddWithValue("@title", GR.Title);
                     command.Parameters.AddWithValue("@studio", GR.Studio);
-                    command.Parameters.AddWithValue("@producer", GR.Producer);
                     command.Parameters.AddWithValue("@winner", GR.Winner);
-                    command.ExecuteNonQuery();
+                    var lastId = command.ExecuteScalar();
+
+                    foreach (var prd in GR.Producers)
+                    {
+                        using var command2 = new SqliteCommand(sqlAwardProducer, connection);
+                        command2.Parameters.AddWithValue("@producer", prd);
+                        command2.Parameters.AddWithValue("@goldenraspberryid", lastId);
+                        command2.ExecuteNonQuery();
+                    }
                 }
                 else
                 {
@@ -128,7 +150,6 @@ namespace Data
                             year INTEGER NOT NULL,
                             title TEXT NOT NULL,
                             studio TEXT NOT NULL,
-                            producer TEXT NOT NULL,
                             winner INTEGER NOT NULL
                         )";
 
@@ -138,6 +159,23 @@ namespace Data
             command.ExecuteNonQuery();
 
             _logger.LogInformation("Table 'GoldenRaspberry' has created.");
+        }
+
+        private void CreateAwardProducerTable()
+        {
+            var sql = @"CREATE TABLE IF NOT EXISTS AwardProducer(
+                            id INTEGER PRIMARY KEY,
+                            producer TEXT NOT NULL,
+  							goldenraspberryid INTEGER NOT NULL,
+  							FOREIGN KEY(goldenraspberryid) REFERENCES GoldenRaspberry(id)
+                        )";
+
+            var connection = GetInMemoryDbConnection();
+
+            using var command = new SqliteCommand(sql, connection);
+            command.ExecuteNonQuery();
+
+            _logger.LogInformation("Table 'AwardProducer' has created.");
         }
     }
 }

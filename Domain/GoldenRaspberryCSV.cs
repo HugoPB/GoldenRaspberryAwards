@@ -11,9 +11,10 @@ namespace Domain
 
         public string Studio = "";
 
-        public string Producer = "";
-
         public bool Winner;
+
+        public List<string> Producers = [];
+
         public int RowinFile;
     }
 }
