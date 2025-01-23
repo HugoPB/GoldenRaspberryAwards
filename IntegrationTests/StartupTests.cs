@@ -7,8 +7,8 @@ using FluentValidation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Services;
-using Golden_Raspberry_Awards.Controllers;
 using System.Reflection;
+using Application.Controllers;
 
 namespace IntegrationTests
 {

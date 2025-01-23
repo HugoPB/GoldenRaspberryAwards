@@ -1,7 +1,7 @@
 ﻿using Domain.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Golden_Raspberry_Awards.Controllers
+namespace Application.Controllers
 {
     [ApiController]
     [Route("[controller]")]
